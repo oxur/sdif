@@ -1,6 +1,10 @@
 //! Integration tests for sdif-sys
 //!
 //! These tests verify that the FFI bindings work correctly with the SDIF library.
+//!
+//! Note: Most tests are disabled when using stub bindings (when SDIF library is not available)
+
+#![cfg(not(sdif_stub_bindings))]
 
 use sdif_sys::*;
 use std::ffi::CString;

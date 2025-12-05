@@ -1,8 +1,19 @@
 # sdif-sys
 
-WIP!!!
+[![Crates.io](https://img.shields.io/crates/v/sdif-sys.svg)](https://crates.io/crates/sdif-sys)
+[![Documentation](https://docs.rs/sdif-sys/badge.svg)](https://docs.rs/sdif-sys)
 
 Raw FFI bindings to the IRCAM SDIF (Sound Description Interchange Format) C library.
+
+## ⚠️ Important Note
+
+**This crate is published as a placeholder on crates.io.** When downloaded from crates.io without
+the SDIF C library installed, it will compile with stub bindings that provide the type definitions
+but no actual functionality. The stub functions will link but cannot be called at runtime.
+
+To use this crate, you **must** have the SDIF C library available either:
+1. Installed system-wide (recommended), OR
+2. As bundled source (see below)
 
 ## Overview
 

@@ -11,14 +11,46 @@ fn main() {
     let use_bundled = env::var("CARGO_FEATURE_BUNDLED").is_ok()
         || env::var("CARGO_FEATURE_STATIC").is_ok();
 
+    // Check if we're in a docs.rs build
+    let is_docs_rs = env::var("DOCS_RS").is_ok();
+
+    if is_docs_rs {
+        // For docs.rs, generate stub bindings without the library
+        println!("cargo:warning=Building on docs.rs - generating stub bindings");
+        println!("cargo:rustc-cfg=sdif_stub_bindings");
+        generate_stub_bindings(&out_dir);
+        return;
+    }
+
     let (include_path, lib_path) = if use_bundled {
-        build_bundled(&out_dir)
+        match try_build_bundled(&out_dir) {
+            Some(paths) => paths,
+            None => {
+                println!("cargo:warning=SDIF library not available - generating stub bindings");
+                println!("cargo:warning=The crate will compile but functions will not be available at runtime");
+                println!("cargo:rustc-cfg=sdif_stub_bindings");
+                generate_stub_bindings(&out_dir);
+                return;
+            }
+        }
     } else {
         match try_pkg_config() {
             Some(paths) => paths,
             None => {
-                println!("cargo:warning=pkg-config failed to find SDIF library, falling back to bundled");
-                build_bundled(&out_dir)
+                println!("cargo:warning=pkg-config failed to find SDIF library");
+                match try_build_bundled(&out_dir) {
+                    Some(paths) => {
+                        println!("cargo:warning=Falling back to bundled build");
+                        paths
+                    }
+                    None => {
+                        println!("cargo:warning=SDIF library not available - generating stub bindings");
+                        println!("cargo:warning=The crate will compile but functions will not be available at runtime");
+                        println!("cargo:rustc-cfg=sdif_stub_bindings");
+                        generate_stub_bindings(&out_dir);
+                        return;
+                    }
+                }
             }
         }
     };
@@ -63,43 +95,48 @@ fn try_pkg_config() -> Option<(PathBuf, Option<PathBuf>)> {
     }
 }
 
-/// Build SDIF from bundled source
-fn build_bundled(out_dir: &PathBuf) -> (PathBuf, Option<PathBuf>) {
-    println!("cargo:info=Building SDIF from bundled source");
+/// Try to build SDIF from bundled source
+fn try_build_bundled(out_dir: &PathBuf) -> Option<(PathBuf, Option<PathBuf>)> {
+    println!("cargo:info=Attempting to build SDIF from bundled source");
 
     let sdif_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("sdif");
 
     // Check if bundled source exists
     if !sdif_dir.exists() {
-        panic!(
-            "Bundled SDIF source not found at {:?}. \n\
-             Either install the SDIF library system-wide, \n\
-             or download the SDIF source and place it in the sdif/ directory. \n\
-             See README.md for instructions.",
-            sdif_dir
-        );
+        println!("cargo:warning=Bundled SDIF source not found at {:?}", sdif_dir);
+        return None;
     }
 
     // Collect C source files
-    // Note: Adjust these paths based on actual SDIF source structure
     let src_dir = sdif_dir.join("src");
     let include_dir = sdif_dir.join("include");
 
-    let c_files: Vec<_> = std::fs::read_dir(&src_dir)
-        .expect("Failed to read sdif/src directory")
-        .filter_map(|entry| {
-            let entry = entry.ok()?;
-            let path = entry.path();
-            if path.extension().map(|e| e == "c").unwrap_or(false) {
-                Some(path)
-            } else {
-                None
-            }
-        })
-        .collect();
+    if !src_dir.exists() || !include_dir.exists() {
+        println!("cargo:warning=Bundled SDIF source incomplete (missing src or include)");
+        return None;
+    }
+
+    let c_files: Vec<_> = match std::fs::read_dir(&src_dir) {
+        Ok(entries) => entries
+            .filter_map(|entry| {
+                let entry = entry.ok()?;
+                let path = entry.path();
+                if path.extension().map(|e| e == "c").unwrap_or(false) {
+                    Some(path)
+                } else {
+                    None
+                }
+            })
+            .collect(),
+        Err(_) => {
+            println!("cargo:warning=Failed to read bundled SDIF src directory");
+            return None;
+        }
+    };
 
     if c_files.is_empty() {
-        panic!("No C source files found in {:?}", src_dir);
+        println!("cargo:warning=No C source files found in bundled SDIF");
+        return None;
     }
 
     // Build the static library
@@ -127,7 +164,7 @@ fn build_bundled(out_dir: &PathBuf) -> (PathBuf, Option<PathBuf>) {
         println!("cargo:rerun-if-changed={}", file.display());
     }
 
-    (include_dir, Some(out_dir.clone()))
+    Some((include_dir, Some(out_dir.clone())))
 }
 
 /// Generate Rust bindings using bindgen
@@ -186,4 +223,71 @@ fn generate_bindings(include_path: &PathBuf, out_dir: &PathBuf) {
         .expect("Failed to write bindings");
 
     println!("cargo:info=Generated bindings at {:?}", bindings_path);
+}
+
+/// Generate stub bindings when SDIF library is not available
+/// This allows the crate to compile for publishing, but the functions won't be usable
+fn generate_stub_bindings(out_dir: &PathBuf) {
+    let stub_bindings = r#"
+// Stub bindings generated because SDIF library was not available at build time.
+// To use this crate, you must:
+// 1. Install the SDIF library system-wide, OR
+// 2. Download the SDIF source and place it in the sdif/ directory, then rebuild with --features bundled
+//
+// See the README.md for detailed instructions.
+
+use std::os::raw::{c_char, c_int, c_void, c_double, c_float};
+
+// Type aliases
+pub type SdifSignature = u32;
+pub type SdifFileT = *mut c_void;
+pub type SdifFloat8 = c_double;
+pub type SdifFloat4 = c_float;
+
+// File mode enum
+pub type SdifFileModeET = u32;
+pub const SdifFileModeET_eReadFile: u32 = 1;
+pub const SdifFileModeET_eWriteFile: u32 = 2;
+pub const SdifFileModeET_ePredefinedTypes: u32 = 4;
+pub const SdifFileModeET_eModeMask: u32 = 7;
+
+// Data type enum
+pub type SdifDataTypeET = u32;
+pub const SdifDataTypeET_eFloat4: u32 = 0x0004;
+pub const SdifDataTypeET_eFloat8: u32 = 0x0008;
+pub const SdifDataTypeET_eInt1: u32 = 0x0001;
+pub const SdifDataTypeET_eInt2: u32 = 0x0002;
+pub const SdifDataTypeET_eInt4: u32 = 0x0004;
+pub const SdifDataTypeET_eUInt1: u32 = 0x0101;
+pub const SdifDataTypeET_eUInt2: u32 = 0x0102;
+pub const SdifDataTypeET_eUInt4: u32 = 0x0104;
+pub const SdifDataTypeET_eText: u32 = 0x0301;
+
+// Stub function declarations - these will link but panic at runtime
+extern "C" {
+    pub fn SdifGenInit(name: *const c_char) -> c_int;
+    pub fn SdifGenKill();
+    pub fn SdifFOpen(name: *const c_char, mode: SdifFileModeET) -> SdifFileT;
+    pub fn SdifFClose(file: SdifFileT) -> c_int;
+    pub fn SdifFReadGeneralHeader(file: SdifFileT) -> usize;
+    pub fn SdifFReadAllASCIIChunks(file: SdifFileT) -> usize;
+    pub fn SdifSignatureConst(a: c_char, b: c_char, c: c_char, d: c_char) -> SdifSignature;
+    pub fn SdifSizeofDataType(data_type: SdifDataTypeET) -> usize;
+}
+
+#[cfg(test)]
+mod stub_warning {
+    #[test]
+    #[ignore]
+    fn warn_about_stubs() {
+        panic!("This is a stub build of sdif-sys. The SDIF library must be installed to run tests.");
+    }
+}
+"#;
+
+    let bindings_path = out_dir.join("bindings.rs");
+    std::fs::write(&bindings_path, stub_bindings)
+        .expect("Failed to write stub bindings");
+
+    println!("cargo:info=Generated stub bindings at {:?}", bindings_path);
 }

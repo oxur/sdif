@@ -64,10 +64,7 @@ include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 // Additional Constants and Type Aliases
 // ============================================================================
 
-/// SDIF signature for 4-character type identifiers.
-///
-/// Signatures are 4-byte codes like "1TRC", "1HRM", etc.
-pub type SdifSignature = u32;
+// Note: SdifSignature type is defined in the generated bindings
 
 /// Convert a 4-character string to an SDIF signature.
 ///
@@ -153,7 +150,9 @@ mod tests {
         signature_from_str("TOO_LONG");
     }
 
+    // Tests that call SDIF functions are only available when NOT using stub bindings
     #[test]
+    #[cfg(not(sdif_stub_bindings))]
     fn test_init_and_kill() {
         // This test verifies that the C library can be initialized and cleaned up
         // without crashing. It's a basic smoke test.
@@ -164,6 +163,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(sdif_stub_bindings))]
     fn test_double_init_is_safe() {
         // SDIF library should handle multiple init calls gracefully
         unsafe {
@@ -182,6 +182,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(sdif_stub_bindings))]
     fn test_data_type_sizes() {
         // Verify data type constants match expected sizes
         // eFloat4 = 4 bytes (f32), eFloat8 = 8 bytes (f64)

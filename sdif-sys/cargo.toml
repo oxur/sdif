@@ -10,6 +10,10 @@ keywords = ["sdif", "audio", "ffi", "ircam", "sound"]
 categories = ["external-ffi-bindings", "multimedia::audio"]
 links = "sdif"
 build = "build.rs"
+readme = "README.md"
+
+[package.metadata.docs.rs]
+rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
 default = []
