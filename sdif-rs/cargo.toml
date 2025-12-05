@@ -1,0 +1,13 @@
+[package]
+name = "sdif-rs"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+description = "Safe Rust wrapper for the IRCAM SDIF (Sound Description Interchange Format) library"
+keywords = ["sdif", "audio", "ircam", "sound"]
+categories = ["multimedia::audio"]
+
+[dependencies]
+#sdif-sys = { path = "../sdif-sys" }

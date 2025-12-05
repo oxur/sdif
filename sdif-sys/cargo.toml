@@ -1,0 +1,30 @@
+[package]
+name = "sdif-sys"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+description = "Raw FFI bindings to the IRCAM SDIF (Sound Description Interchange Format) C library"
+keywords = ["sdif", "audio", "ffi", "ircam", "sound"]
+categories = ["external-ffi-bindings", "multimedia::audio"]
+links = "sdif"
+build = "build.rs"
+
+[features]
+default = []
+# Compile SDIF from bundled source instead of using system library
+bundled = []
+# Force static linking (implies bundled on most systems)
+static = ["bundled"]
+
+[dependencies]
+libc = "0.2"
+
+[build-dependencies]
+bindgen = "0.70"
+cc = "1.0"
+pkg-config = "0.3"
+
+[dev-dependencies]
+# None needed for initial phase

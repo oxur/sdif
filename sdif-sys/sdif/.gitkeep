@@ -1,0 +1,2 @@
+# This file ensures the sdif/ directory is tracked by git
+# The actual SDIF source should be placed here for bundled builds

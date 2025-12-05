@@ -1,0 +1,13 @@
+[package]
+name = "mat2sdif"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+description = "CLI tool for converting MATLAB/Octave analysis data to SDIF format"
+keywords = ["sdif", "matlab", "octave", "audio", "cli"]
+categories = ["command-line-utilities", "multimedia::audio"]
+
+[dependencies]
+#sdif-rs = { path = "../sdif-rs" }
