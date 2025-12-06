@@ -410,11 +410,11 @@ impl SdifFileBuilder<Config> {
 
     /// Add a single NVT to the file.
     fn add_nvt_to_file(handle: *mut SdifFileT, nvt: &HashMap<String, String>) -> Result<()> {
-        use sdif_sys::{SdifNameValueTableGetTable, SdifNameValuesLNewTable, SdifNameValuesLPutCurrNVT};
+        use sdif_sys::{SdifFNameValueList, SdifNameValuesLNewTable, SdifNameValuesLPutCurrNVT};
 
         unsafe {
             // Get the NVT list from the file
-            let nvt_list = SdifNameValueTableGetTable(handle);
+            let nvt_list = SdifFNameValueList(handle);
             if nvt_list.is_null() {
                 return Err(Error::null_pointer("NVT list"));
             }
@@ -439,8 +439,9 @@ impl SdifFileBuilder<Config> {
     fn add_matrix_type_to_file(handle: *mut SdifFileT, mtd: &MatrixTypeDef) -> Result<()> {
         use sdif_sys::{
             SdifFGetMatrixTypesTable, SdifMatrixTypeInsertTailColumnDef,
-            SdifMatrixTypeLPutSdifMatrixType, SdifSignatureConst,
+            SdifCreateMatrixType, SdifPutMatrixType,
         };
+        use crate::signature::string_to_signature;
 
         unsafe {
             // Get the matrix types table
@@ -450,16 +451,10 @@ impl SdifFileBuilder<Config> {
             }
 
             // Create signature
-            let sig_bytes = mtd.signature.as_bytes();
-            let sig = SdifSignatureConst(
-                sig_bytes[0] as i8,
-                sig_bytes[1] as i8,
-                sig_bytes[2] as i8,
-                sig_bytes[3] as i8,
-            );
+            let sig = string_to_signature(&mtd.signature)?;
 
-            // Create the matrix type
-            let mtype = SdifMatrixTypeLPutSdifMatrixType(mtypes, sig);
+            // Create the matrix type (pass null for predefined)
+            let mtype = SdifCreateMatrixType(sig, std::ptr::null_mut());
             if mtype.is_null() {
                 return Err(Error::null_pointer("Matrix type"));
             }
@@ -469,6 +464,9 @@ impl SdifFileBuilder<Config> {
                 let c_name = CString::new(col_name.as_str())?;
                 SdifMatrixTypeInsertTailColumnDef(mtype, c_name.as_ptr());
             }
+
+            // Add the matrix type to the table
+            SdifPutMatrixType(mtypes, mtype);
         }
 
         Ok(())
@@ -478,8 +476,9 @@ impl SdifFileBuilder<Config> {
     fn add_frame_type_to_file(handle: *mut SdifFileT, ftd: &FrameTypeDef) -> Result<()> {
         use sdif_sys::{
             SdifFGetFrameTypesTable, SdifFrameTypePutComponent,
-            SdifFrameTypeLPutSdifFrameType, SdifSignatureConst,
+            SdifCreateFrameType, SdifPutFrameType,
         };
+        use crate::signature::string_to_signature;
 
         unsafe {
             // Get the frame types table
@@ -489,16 +488,10 @@ impl SdifFileBuilder<Config> {
             }
 
             // Create signature
-            let sig_bytes = ftd.signature.as_bytes();
-            let sig = SdifSignatureConst(
-                sig_bytes[0] as i8,
-                sig_bytes[1] as i8,
-                sig_bytes[2] as i8,
-                sig_bytes[3] as i8,
-            );
+            let sig = string_to_signature(&ftd.signature)?;
 
-            // Create the frame type
-            let ftype = SdifFrameTypeLPutSdifFrameType(ftypes, sig);
+            // Create the frame type (pass null for predefined)
+            let ftype = SdifCreateFrameType(sig, std::ptr::null_mut());
             if ftype.is_null() {
                 return Err(Error::null_pointer("Frame type"));
             }
@@ -514,17 +507,13 @@ impl SdifFileBuilder<Config> {
                     )));
                 }
 
-                let msig_bytes = parts[0].as_bytes();
-                let msig = SdifSignatureConst(
-                    msig_bytes[0] as i8,
-                    msig_bytes[1] as i8,
-                    msig_bytes[2] as i8,
-                    msig_bytes[3] as i8,
-                );
-
-                let c_name = CString::new(parts[1])?;
-                SdifFrameTypePutComponent(ftype, msig, c_name.as_ptr());
+                let msig = string_to_signature(parts[0])?;
+                let mut c_name = CString::new(parts[1])?;
+                SdifFrameTypePutComponent(ftype, msig, c_name.as_ptr() as *mut _);
             }
+
+            // Add the frame type to the table
+            SdifPutFrameType(ftypes, ftype);
         }
 
         Ok(())

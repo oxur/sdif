@@ -6,8 +6,8 @@
 use std::marker::PhantomData;
 
 use sdif_sys::{
-    SdifFCurrFrameSignature, SdifFCurrNbMatrix, SdifFCurrTime,
-    SdifFGetSignature, SdifFReadFrameHeader, SdifFSkipFrameData,
+    SdifFCurrFrameSignature, SdifFCurrID, SdifFCurrNbMatrix, SdifFCurrTime,
+    SdifFReadFrameHeader, SdifFSkipFrameData,
     SdifFileT,
 };
 
@@ -75,7 +75,7 @@ impl<'a> Frame<'a> {
 
         let time = unsafe { SdifFCurrTime(handle) };
         let signature = unsafe { SdifFCurrFrameSignature(handle) };
-        let stream_id = unsafe { SdifFGetSignature(handle) }; // Stream ID is stored here
+        let stream_id = unsafe { SdifFCurrID(handle) }; // Get the stream ID from current frame
         let num_matrices = unsafe { SdifFCurrNbMatrix(handle) };
 
         Frame {

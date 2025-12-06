@@ -357,8 +357,12 @@ extern "C" {
     pub fn SdifFWriteMatrixData(file: *mut SdifFileT, data: *mut c_void) -> usize;
     pub fn SdifFWritePadding(file: *mut SdifFileT, padding_size: u32) -> usize;
 
-    // NVT and type definition functions
-    pub fn SdifNameValueTableGetTable(file: *mut SdifFileT) -> *mut c_void;
+    // Signature conversion functions
+    pub fn SdifStringToSignature(str_: *const c_char) -> SdifSignature;
+    pub fn SdifSignatureToString(sig: SdifSignature) -> *const c_char;
+
+    // NVT functions
+    pub fn SdifFNameValueList(file: *mut SdifFileT) -> *mut c_void;  // Returns SdifNameValuesLT*
     pub fn SdifNameValuesLNewTable(nvt_list: *mut c_void, stream_id: u32) -> *mut c_void;
     pub fn SdifNameValuesLPutCurrNVT(
         nvt_list: *mut c_void,
@@ -367,26 +371,34 @@ extern "C" {
     );
 
     // Matrix type definition functions
-    pub fn SdifFGetMatrixTypesTable(file: *mut SdifFileT) -> *mut c_void;
-    pub fn SdifMatrixTypeLPutSdifMatrixType(
-        mtypes: *mut c_void,
+    pub fn SdifFGetMatrixTypesTable(file: *mut SdifFileT) -> *mut c_void;  // Returns SdifHashTableT*
+    pub fn SdifCreateMatrixType(
         signature: SdifSignature,
-    ) -> *mut c_void;
+        predefined: *mut c_void,
+    ) -> *mut c_void;  // Returns SdifMatrixTypeT*
     pub fn SdifMatrixTypeInsertTailColumnDef(
         mtype: *mut c_void,
         column_name: *const c_char,
     );
+    pub fn SdifPutMatrixType(
+        table: *mut c_void,
+        mtype: *mut c_void,
+    );
 
     // Frame type definition functions
-    pub fn SdifFGetFrameTypesTable(file: *mut SdifFileT) -> *mut c_void;
-    pub fn SdifFrameTypeLPutSdifFrameType(
-        ftypes: *mut c_void,
+    pub fn SdifFGetFrameTypesTable(file: *mut SdifFileT) -> *mut c_void;  // Returns SdifHashTableT*
+    pub fn SdifCreateFrameType(
         signature: SdifSignature,
-    ) -> *mut c_void;
+        predefined: *mut c_void,
+    ) -> *mut c_void;  // Returns SdifFrameTypeT*
     pub fn SdifFrameTypePutComponent(
         ftype: *mut c_void,
         component_sig: SdifSignature,
         component_name: *const c_char,
+    );
+    pub fn SdifPutFrameType(
+        table: *mut c_void,
+        ftype: *mut c_void,
     );
 }
 

@@ -100,9 +100,8 @@ pub use SdifDataTypeE_eText as SdifDataTypeET_eText;
 
 /// Convert a 4-character string to an SDIF signature.
 ///
-/// # Safety
-///
-/// The C function is called internally. The input must be exactly 4 ASCII characters.
+/// This function uses bit manipulation to create the signature without calling the C library.
+/// For compatibility with the SDIF library, you can also use `SdifStringToSignature`.
 ///
 /// # Panics
 ///
@@ -117,6 +116,9 @@ pub fn signature_from_str(s: &str) -> SdifSignature {
 }
 
 /// Convert an SDIF signature to a 4-character string.
+///
+/// This function uses bit manipulation to decode the signature without calling the C library.
+/// For compatibility with the SDIF library, you can also use `SdifSignatureToString`.
 pub fn signature_to_string(sig: SdifSignature) -> String {
     let bytes = [
         ((sig >> 24) & 0xFF) as u8,
@@ -125,6 +127,22 @@ pub fn signature_to_string(sig: SdifSignature) -> String {
         (sig & 0xFF) as u8,
     ];
     String::from_utf8_lossy(&bytes).into_owned()
+}
+
+/// Convert a 4-character string to an SDIF signature using the C library.
+///
+/// This is a safe wrapper around `SdifStringToSignature`.
+/// When not using stub bindings, this calls the actual SDIF library function.
+///
+/// # Panics
+///
+/// Panics if the string is not exactly 4 bytes.
+#[cfg(not(sdif_stub_bindings))]
+pub fn string_to_signature_c(s: &str) -> SdifSignature {
+    use std::ffi::CString;
+    assert_eq!(s.len(), 4, "SDIF signatures must be exactly 4 characters");
+    let c_str = CString::new(s).expect("String contains null byte");
+    unsafe { SdifStringToSignature(c_str.as_ptr()) }
 }
 
 // ============================================================================

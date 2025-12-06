@@ -285,7 +285,7 @@ impl<'a> FrameBuilder<'a> {
         }
 
         // Write padding
-        SdifFWritePadding(handle, calculate_padding(data_bytes));
+        SdifFWritePadding(handle, calculate_padding(data_bytes) as usize);
 
         Ok(())
     }
