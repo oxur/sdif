@@ -82,7 +82,21 @@ cargo build --features sdif-sys/bundled
 
 ## License
 
-MIT License
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+### Bundled SDIF C Library
+
+The optional bundled SDIF C library (`sdif-sys/sdif/`) is developed by IRCAM and licensed under **LGPL-2.0**. See `sdif-sys/sdif/COPYING` for the full license text.
+
+When using the `bundled` feature (which statically links the SDIF library), the LGPL-2.0 requirements apply to the SDIF library portion:
+
+- You must provide a way for users to relink with a modified SDIF library
+- This is satisfied by providing your source code, or object files sufficient for relinking
+- You must include the LGPL-2.0 license text and attribution
+
+When using a system-installed SDIF library (dynamic linking), your application is considered a "work that uses the library" and is not subject to LGPL copyleft requirements.
+
+**SDIF Library Source:** https://sourceforge.net/projects/sdif/
 
 ## References
 
