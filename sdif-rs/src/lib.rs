@@ -84,6 +84,7 @@
 //! ## Feature Flags
 //!
 //! - `ndarray`: Enable `ndarray` integration for matrix data access
+//! - `mat`: Enable MAT file parsing for MATLAB/Octave file conversion (includes `ndarray`)
 //! - `bundled`: Compile SDIF C library from bundled source
 //! - `static`: Force static linking of SDIF C library
 //!
@@ -109,6 +110,10 @@ pub mod builder;
 mod frame_builder;
 mod writer;
 
+// Modules - MAT file support (optional)
+#[cfg(feature = "mat")]
+pub mod mat;
+
 // Public exports - Core types
 pub use data_type::DataType;
 pub use error::{Error, Result};
@@ -121,6 +126,10 @@ pub use signature::{Signature, signature_to_string, string_to_signature};
 pub use builder::SdifFileBuilder;
 pub use frame_builder::FrameBuilder;
 pub use writer::SdifWriter;
+
+// Public exports - MAT support
+#[cfg(feature = "mat")]
+pub use mat::{MatData, MatFile, MatToSdifConfig, MatToSdifConverter, ComplexMode, TimeStats};
 
 // Re-export common signatures for convenience
 pub mod signatures {

@@ -13,6 +13,8 @@ categories = ["multimedia::audio", "parser-implementations"]
 default = []
 # Enable ndarray integration for matrix data access
 ndarray = ["dep:ndarray"]
+# MAT file support (automatically enables ndarray)
+mat = ["dep:matfile", "ndarray"]
 # Pass through to sdif-sys
 bundled = ["sdif-sys/bundled"]
 static = ["sdif-sys/static"]
@@ -24,6 +26,7 @@ libc = "0.2"
 
 # Optional dependencies
 ndarray = { version = "0.15", optional = true }
+matfile = { version = "0.5", optional = true }
 
 [dev-dependencies]
 tempfile = "3.0"

@@ -56,6 +56,69 @@ print("Created simple.sdif")
 2. Perform analysis
 3. Export as SDIF
 
+## MAT Test Files
+
+For MAT file integration tests, add these files:
+
+### simple.mat
+
+A basic MAT file with:
+- `time` - 1D array of time values (e.g., 0.0 to 1.0 in 0.01 steps)
+- `partials` - 2D array where each row is a time frame
+  - Columns: Index, Frequency, Amplitude, Phase
+
+### complex.mat
+
+A MAT file with complex data:
+- `spectrum` - 2D complex array (e.g., STFT output)
+- `time` - 1D time vector
+
+### Creating Test MAT Files
+
+Using MATLAB:
+```matlab
+% simple.mat
+time = (0:0.01:1)';  % 101 time points
+partials = zeros(101, 4);
+for i = 1:101
+    partials(i, :) = [1, 440 + i, 0.5 * exp(-i/50), 0];
+end
+save('simple.mat', 'time', 'partials');
+
+% complex.mat
+time = (0:0.01:1)';
+spectrum = randn(101, 256) + 1i * randn(101, 256);
+save('complex.mat', 'time', 'spectrum');
+```
+
+Using Python (scipy):
+```python
+import numpy as np
+from scipy.io import savemat
+
+# simple.mat
+time = np.arange(0, 1.01, 0.01)
+partials = np.zeros((101, 4))
+for i in range(101):
+    partials[i] = [1, 440 + i, 0.5 * np.exp(-i/50), 0]
+savemat('simple.mat', {'time': time, 'partials': partials})
+
+# complex.mat
+spectrum = np.random.randn(101, 256) + 1j * np.random.randn(101, 256)
+savemat('complex.mat', {'time': time, 'spectrum': spectrum})
+```
+
+Using Octave:
+```octave
+% Same as MATLAB syntax
+time = (0:0.01:1)';
+partials = zeros(101, 4);
+for i = 1:101
+    partials(i, :) = [1, 440 + i, 0.5 * exp(-i/50), 0];
+endfor
+save('-v7', 'simple.mat', 'time', 'partials');
+```
+
 ## Running Tests with Fixtures
 
 Once fixtures are in place:
@@ -66,4 +129,7 @@ cargo test -- --include-ignored
 
 # Run only fixture-dependent tests
 cargo test --test integration -- --include-ignored
+
+# Run MAT integration tests (requires mat feature)
+cargo test --features mat --test mat_tests -- --include-ignored
 ```
