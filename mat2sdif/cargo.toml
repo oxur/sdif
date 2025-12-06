@@ -5,9 +5,35 @@ edition.workspace = true
 license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
-description = "CLI tool for converting MATLAB/Octave analysis data to SDIF format"
-keywords = ["sdif", "matlab", "octave", "audio", "cli"]
+description = "Convert MATLAB/Octave .mat files to SDIF format"
+keywords = ["sdif", "matlab", "octave", "audio", "converter"]
 categories = ["command-line-utilities", "multimedia::audio"]
 
+[[bin]]
+name = "mat2sdif"
+path = "src/main.rs"
+
 [dependencies]
-#sdif-rs = { path = "../sdif-rs" }
+# Local dependencies
+sdif-rs = { path = "../sdif-rs", features = ["mat"] }
+
+# CLI framework
+clap = { version = "4.4", features = ["derive", "env", "wrap_help"] }
+
+# Error handling
+anyhow = "1.0"
+
+# Colored terminal output
+colored = "2.0"
+
+# Progress indication (optional, for large files)
+indicatif = { version = "0.17", optional = true }
+
+[features]
+default = []
+progress = ["indicatif"]
+
+[dev-dependencies]
+assert_cmd = "2.0"
+predicates = "3.0"
+tempfile = "3.0"
