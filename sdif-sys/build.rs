@@ -297,6 +297,78 @@ extern "C" {
     pub fn SdifFReadOneRow(file: *mut SdifFileT) -> isize;
     pub fn SdifFCurrOneRowData(file: *mut SdifFileT) -> *mut c_void;
     pub fn SdifFReadMatrixData(file: *mut SdifFileT) -> isize;
+
+    // Writing functions - General
+    pub fn SdifFWriteGeneralHeader(file: *mut SdifFileT) -> usize;
+    pub fn SdifFWriteAllASCIIChunks(file: *mut SdifFileT) -> isize;
+
+    // Writing functions - Frame and Matrix (simple)
+    pub fn SdifFWriteFrameAndOneMatrix(
+        file: *mut SdifFileT,
+        frame_sig: SdifSignature,
+        stream_id: u32,
+        time: c_double,
+        matrix_sig: SdifSignature,
+        data_type: SdifDataTypeET,
+        nb_row: u32,
+        nb_col: u32,
+        data: *mut c_void,
+    ) -> usize;
+
+    // Writing functions - Frame (for multi-matrix frames)
+    pub fn SdifFSetCurrFrameHeader(
+        file: *mut SdifFileT,
+        signature: SdifSignature,
+        size: u32,
+        nb_matrix: u32,
+        stream_id: u32,
+        time: c_double,
+    );
+    pub fn SdifFWriteFrameHeader(file: *mut SdifFileT) -> usize;
+
+    // Writing functions - Matrix
+    pub fn SdifFSetCurrMatrixHeader(
+        file: *mut SdifFileT,
+        signature: SdifSignature,
+        data_type: SdifDataTypeET,
+        nb_row: u32,
+        nb_col: u32,
+    );
+    pub fn SdifFWriteMatrixHeader(file: *mut SdifFileT) -> usize;
+    pub fn SdifFWriteMatrixData(file: *mut SdifFileT, data: *mut c_void) -> usize;
+    pub fn SdifFWritePadding(file: *mut SdifFileT, padding_size: u32) -> usize;
+
+    // NVT and type definition functions
+    pub fn SdifNameValueTableGetTable(file: *mut SdifFileT) -> *mut c_void;
+    pub fn SdifNameValuesLNewTable(nvt_list: *mut c_void, stream_id: u32) -> *mut c_void;
+    pub fn SdifNameValuesLPutCurrNVT(
+        nvt_list: *mut c_void,
+        name: *const c_char,
+        value: *const c_char,
+    );
+
+    // Matrix type definition functions
+    pub fn SdifFGetMatrixTypesTable(file: *mut SdifFileT) -> *mut c_void;
+    pub fn SdifMatrixTypeLPutSdifMatrixType(
+        mtypes: *mut c_void,
+        signature: SdifSignature,
+    ) -> *mut c_void;
+    pub fn SdifMatrixTypeInsertTailColumnDef(
+        mtype: *mut c_void,
+        column_name: *const c_char,
+    );
+
+    // Frame type definition functions
+    pub fn SdifFGetFrameTypesTable(file: *mut SdifFileT) -> *mut c_void;
+    pub fn SdifFrameTypeLPutSdifFrameType(
+        ftypes: *mut c_void,
+        signature: SdifSignature,
+    ) -> *mut c_void;
+    pub fn SdifFrameTypePutComponent(
+        ftype: *mut c_void,
+        component_sig: SdifSignature,
+        component_name: *const c_char,
+    );
 }
 
 #[cfg(test)]

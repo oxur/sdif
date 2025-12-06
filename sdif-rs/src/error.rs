@@ -89,6 +89,23 @@ pub enum Error {
         /// Number of columns.
         cols: usize,
     },
+
+    /// The file has already been closed.
+    #[error("File has been closed")]
+    FileClosed,
+
+    /// Frame has no matrices.
+    #[error("Frame must contain at least one matrix")]
+    EmptyFrame,
+
+    /// Time values must be non-decreasing.
+    #[error("Time must be non-decreasing: {current} < {previous}")]
+    TimeNotIncreasing {
+        /// Current time value.
+        current: f64,
+        /// Previous time value.
+        previous: f64,
+    },
 }
 
 impl Error {
@@ -128,6 +145,11 @@ impl Error {
     /// Create a ReadError.
     pub fn read_error(message: impl Into<String>) -> Self {
         Self::ReadError { message: message.into() }
+    }
+
+    /// Create a TimeNotIncreasing error.
+    pub const fn time_not_increasing(current: f64, previous: f64) -> Self {
+        Self::TimeNotIncreasing { current, previous }
     }
 }
 

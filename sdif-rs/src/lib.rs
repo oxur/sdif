@@ -95,7 +95,7 @@
 
 #![deny(missing_docs)]
 
-// Modules
+// Modules - Reading
 mod data_type;
 mod error;
 mod file;
@@ -104,13 +104,23 @@ pub mod init;
 mod matrix;
 mod signature;
 
-// Public exports
+// Modules - Writing
+pub mod builder;
+mod frame_builder;
+mod writer;
+
+// Public exports - Core types
 pub use data_type::DataType;
 pub use error::{Error, Result};
 pub use file::SdifFile;
 pub use frame::Frame;
 pub use matrix::Matrix;
 pub use signature::{Signature, signature_to_string, string_to_signature};
+
+// Public exports - Writing
+pub use builder::SdifFileBuilder;
+pub use frame_builder::FrameBuilder;
+pub use writer::SdifWriter;
 
 // Re-export common signatures for convenience
 pub mod signatures {
@@ -137,3 +147,25 @@ pub mod signatures {
 // Conditional re-exports
 #[cfg(feature = "ndarray")]
 pub use ndarray;
+
+// Builder method on SdifFile
+impl SdifFile {
+    /// Create a builder for writing a new SDIF file.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use sdif_rs::SdifFile;
+    ///
+    /// let writer = SdifFile::builder()
+    ///     .create("output.sdif")?
+    ///     .add_nvt([("creator", "my-app")])?
+    ///     .add_matrix_type("1TRC", &["Index", "Frequency", "Amplitude", "Phase"])?
+    ///     .add_frame_type("1TRC", &["1TRC SinusoidalTracks"])?
+    ///     .build()?;
+    /// # Ok::<(), sdif_rs::Error>(())
+    /// ```
+    pub fn builder() -> SdifFileBuilder<builder::New> {
+        SdifFileBuilder::new()
+    }
+}

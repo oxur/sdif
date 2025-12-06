@@ -94,6 +94,70 @@ for frame in file.frames() {
 }
 ```
 
+### Writing SDIF Files
+
+```rust
+use sdif_rs::{SdifFile, Result};
+
+fn main() -> Result<()> {
+    // Create a new SDIF file with the builder pattern
+    let mut writer = SdifFile::builder()
+        .create("output.sdif")?
+        // Add metadata
+        .add_nvt([
+            ("creator", "my-application"),
+            ("date", "2024-01-01"),
+        ])?
+        // Define matrix type with column names
+        .add_matrix_type("1TRC", &["Index", "Frequency", "Amplitude", "Phase"])?
+        // Define frame type with its components
+        .add_frame_type("1TRC", &["1TRC SinusoidalTracks"])?
+        .build()?;
+
+    // Write frames with data
+    for i in 0..100 {
+        let time = i as f64 * 0.01; // 10ms hop
+
+        // Create partial data: 3 partials, 4 columns each
+        let data = vec![
+            1.0, 440.0 * (1.0 + 0.001 * i as f64), 0.5, 0.0,
+            2.0, 880.0 * (1.0 + 0.001 * i as f64), 0.3, 1.57,
+            3.0, 1320.0 * (1.0 + 0.001 * i as f64), 0.2, 3.14,
+        ];
+
+        writer.write_frame_one_matrix("1TRC", time, "1TRC", 3, 4, &data)?;
+    }
+
+    // Don't forget to close!
+    writer.close()?;
+
+    println!("Wrote {} frames", 100);
+    Ok(())
+}
+```
+
+### Multi-Matrix Frames
+
+For frames containing multiple matrices, use the `FrameBuilder`:
+
+```rust
+use sdif_rs::SdifFile;
+
+let mut writer = SdifFile::builder()
+    .create("multi.sdif")?
+    .add_matrix_type("1TRC", &["Index", "Frequency", "Amplitude", "Phase"])?
+    .add_frame_type("1TRC", &["1TRC SinusoidalTracks"])?
+    .build()?;
+
+// Build a frame with multiple matrices
+writer.new_frame("1TRC", 0.0, 0)?
+    .add_matrix("1TRC", 2, 4, &[1.0, 440.0, 0.5, 0.0, 2.0, 880.0, 0.3, 1.57])?
+    .add_matrix("1TRC", 1, 4, &[3.0, 1320.0, 0.2, 3.14])?
+    .finish()?;  // Must call finish()!
+
+writer.close()?;
+```
+
 ## Supported Frame Types
 
 | Signature | Name | Description |
