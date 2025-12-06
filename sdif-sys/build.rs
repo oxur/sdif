@@ -108,11 +108,14 @@ fn try_build_bundled(out_dir: &PathBuf) -> Option<(PathBuf, Option<PathBuf>)> {
     }
 
     // Collect C source files
-    let src_dir = sdif_dir.join("src");
+    // Note: SDIF library has source files in sdif/sdif/ directory, not sdif/src/
+    let src_dir = sdif_dir.join("sdif");
     let include_dir = sdif_dir.join("include");
 
     if !src_dir.exists() || !include_dir.exists() {
-        println!("cargo:warning=Bundled SDIF source incomplete (missing src or include)");
+        println!("cargo:warning=Bundled SDIF source incomplete (missing sdif or include)");
+        println!("cargo:warning=  src_dir: {:?}", src_dir);
+        println!("cargo:warning=  include_dir: {:?}", include_dir);
         return None;
     }
 
@@ -144,12 +147,23 @@ fn try_build_bundled(out_dir: &PathBuf) -> Option<(PathBuf, Option<PathBuf>)> {
     build
         .files(&c_files)
         .include(&include_dir)
+        .include(&src_dir)  // Include sdif/sdif/ for local headers like host_architecture.h
         .warnings(false)  // SDIF code may have warnings we can't fix
-        .opt_level(2);
+        .opt_level(2)
+        .define("HAVE_STDINT_H", "1");  // Modern C compilers have stdint.h
 
     // Platform-specific settings
     if cfg!(target_os = "windows") {
         build.define("WIN32", None);
+    }
+
+    // Endianness settings - SDIF library needs these for modern architectures
+    // ARM64, x86_64, and most modern architectures are little-endian
+    if cfg!(target_endian = "little") {
+        build.define("HOST_ENDIAN_LITTLE", "1");
+    } else {
+        build.define("HOST_ENDIAN_BIG", "1");
+        build.define("WORDS_BIGENDIAN", "1");
     }
 
     // Set SDIFTYPES path if needed
@@ -183,14 +197,15 @@ fn generate_bindings(include_path: &PathBuf, out_dir: &PathBuf) {
         .allowlist_var("eSdif.*")
 
         // File mode enums
-        .allowlist_type("SdifFileModeET")
+        .allowlist_type("SdifFileModeE")
         .allowlist_var("eReadFile")
         .allowlist_var("eWriteFile")
+        .allowlist_var("eUnknownFileMode")
         .allowlist_var("ePredefinedTypes")
         .allowlist_var("eModeMask")
 
         // Data type enums
-        .allowlist_type("SdifDataTypeET")
+        .allowlist_type("SdifDataTypeE")
         .allowlist_var("eFloat4")
         .allowlist_var("eFloat8")
         .allowlist_var("eInt1")
@@ -200,6 +215,10 @@ fn generate_bindings(include_path: &PathBuf, out_dir: &PathBuf) {
         .allowlist_var("eUInt2")
         .allowlist_var("eUInt4")
         .allowlist_var("eText")
+
+        // Create type aliases for compatibility
+        .type_alias("SdifFileModeET")
+        .type_alias("SdifDataTypeET")
 
         // Derive useful traits where possible
         .derive_debug(true)

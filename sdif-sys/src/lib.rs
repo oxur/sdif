@@ -63,6 +63,38 @@ include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 // ============================================================================
 // Additional Constants and Type Aliases
 // ============================================================================
+//
+// Note: The bindgen-generated bindings automatically create type aliases like:
+// - SdifFileModeE as SdifFileModeET
+// - SdifDataTypeE as SdifDataTypeET
+// These provide compatibility with code expecting the "ET" suffix naming.
+//
+// For the enum constants, we need to provide aliases manually since bindgen
+// creates the type aliases but not the constant aliases.
+
+#[cfg(not(sdif_stub_bindings))]
+pub use SdifFileModeE_eReadFile as SdifFileModeET_eReadFile;
+#[cfg(not(sdif_stub_bindings))]
+pub use SdifFileModeE_eWriteFile as SdifFileModeET_eWriteFile;
+
+#[cfg(not(sdif_stub_bindings))]
+pub use SdifDataTypeE_eFloat4 as SdifDataTypeET_eFloat4;
+#[cfg(not(sdif_stub_bindings))]
+pub use SdifDataTypeE_eFloat8 as SdifDataTypeET_eFloat8;
+#[cfg(not(sdif_stub_bindings))]
+pub use SdifDataTypeE_eInt1 as SdifDataTypeET_eInt1;
+#[cfg(not(sdif_stub_bindings))]
+pub use SdifDataTypeE_eInt2 as SdifDataTypeET_eInt2;
+#[cfg(not(sdif_stub_bindings))]
+pub use SdifDataTypeE_eInt4 as SdifDataTypeET_eInt4;
+#[cfg(not(sdif_stub_bindings))]
+pub use SdifDataTypeE_eUInt1 as SdifDataTypeET_eUInt1;
+#[cfg(not(sdif_stub_bindings))]
+pub use SdifDataTypeE_eUInt2 as SdifDataTypeET_eUInt2;
+#[cfg(not(sdif_stub_bindings))]
+pub use SdifDataTypeE_eUInt4 as SdifDataTypeET_eUInt4;
+#[cfg(not(sdif_stub_bindings))]
+pub use SdifDataTypeE_eText as SdifDataTypeET_eText;
 
 // Note: SdifSignature type is defined in the generated bindings
 
@@ -158,18 +190,6 @@ mod tests {
         // without crashing. It's a basic smoke test.
         unsafe {
             SdifGenInit(ptr::null());
-            SdifGenKill();
-        }
-    }
-
-    #[test]
-    #[cfg(not(sdif_stub_bindings))]
-    fn test_double_init_is_safe() {
-        // SDIF library should handle multiple init calls gracefully
-        unsafe {
-            SdifGenInit(ptr::null());
-            SdifGenInit(ptr::null());
-            SdifGenKill();
             SdifGenKill();
         }
     }

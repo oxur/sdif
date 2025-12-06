@@ -10,6 +10,98 @@ This document provides step-by-step instructions for Claude Code to implement Ph
 
 ---
 
+## Step 0: Obtain SDIF C Library Source (REQUIRED FIRST)
+
+Before implementing any code, the SDIF C library source must be downloaded and placed in the correct location. **This step is mandatory for the `bundled` feature to work and for testing.**
+
+### Task 0.1: Download SDIF Source
+
+**Claude Code Prompt:**
+
+```
+Download the SDIF C library source from SourceForge and set it up for bundled compilation.
+
+The SDIF library is hosted at: https://sourceforge.net/projects/sdif/
+Latest version: SDIF-3.11.7 (or SDIF-3.11.4)
+License: LGPL v2.0
+
+Execute these commands:
+
+# Navigate to sdif-sys directory (create if needed)
+mkdir -p sdif-sys
+cd sdif-sys
+
+# Download the source archive
+curl -L "https://sourceforge.net/projects/sdif/files/sdif/SDIF-3.11.4/SDIF-3.11.4-src.zip/download" -o SDIF-src.zip
+
+# Extract
+unzip SDIF-src.zip
+
+# Rename to 'sdif' for consistency with build.rs expectations
+mv SDIF-3.11.4-src sdif
+
+# Clean up archive
+rm SDIF-src.zip
+
+# Verify the structure
+ls sdif/include/sdif.h      # Should exist - main header
+ls sdif/sdif/*.c | head     # Should show C source files
+```
+
+### Expected Structure After Download
+
+```
+sdif-sys/
+└── sdif/                      # SDIF C library source
+    ├── COPYING                # LGPL v2.0 license
+    ├── README
+    ├── configure
+    ├── include/
+    │   └── sdif.h             # Main header (bindgen input)
+    ├── sdif/
+    │   ├── SdifFile.c
+    │   ├── SdifFrame.c
+    │   ├── SdifMatrix.c
+    │   ├── SdifGenInit.c
+    │   └── ... (many .c files)
+    └── ...
+```
+
+### Verification
+
+```bash
+# Confirm header exists
+test -f sdif-sys/sdif/include/sdif.h && echo "✓ Header found" || echo "✗ Header missing"
+
+# Count source files
+echo "Source files: $(ls sdif-sys/sdif/sdif/*.c 2>/dev/null | wc -l)"
+```
+
+### Alternative: System Installation
+
+If you prefer to use a system-installed SDIF library (detected via pkg-config), you can skip bundling:
+
+```bash
+# On Ubuntu/Debian (if packaged)
+sudo apt-get install libsdif-dev
+
+# Or build from source system-wide
+cd /tmp
+curl -L "https://sourceforge.net/projects/sdif/files/sdif/SDIF-3.11.4/SDIF-3.11.4-src.zip/download" -o sdif.zip
+unzip sdif.zip
+cd SDIF-3.11.4-src
+./configure --prefix=/usr/local
+make
+sudo make install
+
+# Verify
+pkg-config --libs --cflags sdif
+```
+
+With a system installation, the build.rs will find it via pkg-config and skip bundled compilation.
+
+---
+
 ## Step 1: Workspace and Directory Structure Setup
 
 ### Task 1.1: Create the Workspace Root
