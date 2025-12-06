@@ -5,9 +5,26 @@ edition.workspace = true
 license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
-description = "Safe Rust wrapper for the IRCAM SDIF (Sound Description Interchange Format) library"
-keywords = ["sdif", "audio", "ircam", "sound"]
-categories = ["multimedia::audio"]
+description = "Safe, idiomatic Rust wrapper for SDIF (Sound Description Interchange Format) files"
+keywords = ["sdif", "audio", "ircam", "sound", "spectral"]
+categories = ["multimedia::audio", "parser-implementations"]
+
+[features]
+default = []
+# Enable ndarray integration for matrix data access
+ndarray = ["dep:ndarray"]
+# Pass through to sdif-sys
+bundled = ["sdif-sys/bundled"]
+static = ["sdif-sys/static"]
 
 [dependencies]
-#sdif-sys = { path = "../sdif-sys" }
+sdif-sys = { path = "../sdif-sys" }
+thiserror = "1.0"
+libc = "0.2"
+
+# Optional dependencies
+ndarray = { version = "0.15", optional = true }
+
+[dev-dependencies]
+tempfile = "3.0"
+approx = "0.5"  # For floating-point comparisons in tests

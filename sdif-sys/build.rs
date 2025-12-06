@@ -238,9 +238,14 @@ fn generate_stub_bindings(out_dir: &PathBuf) {
 
 use std::os::raw::{c_char, c_int, c_void, c_double, c_float};
 
+// Opaque types (matching real SDIF library structure)
+#[repr(C)]
+pub struct SdifFileT {
+    _private: [u8; 0],
+}
+
 // Type aliases
 pub type SdifSignature = u32;
-pub type SdifFileT = *mut c_void;
 pub type SdifFloat8 = c_double;
 pub type SdifFloat4 = c_float;
 
@@ -267,12 +272,31 @@ pub const SdifDataTypeET_eText: u32 = 0x0301;
 extern "C" {
     pub fn SdifGenInit(name: *const c_char) -> c_int;
     pub fn SdifGenKill();
-    pub fn SdifFOpen(name: *const c_char, mode: SdifFileModeET) -> SdifFileT;
-    pub fn SdifFClose(file: SdifFileT) -> c_int;
-    pub fn SdifFReadGeneralHeader(file: SdifFileT) -> usize;
-    pub fn SdifFReadAllASCIIChunks(file: SdifFileT) -> usize;
+    pub fn SdifFOpen(name: *const c_char, mode: SdifFileModeET) -> *mut SdifFileT;
+    pub fn SdifFClose(file: *mut SdifFileT) -> c_int;
+    pub fn SdifFReadGeneralHeader(file: *mut SdifFileT) -> usize;
+    pub fn SdifFReadAllASCIIChunks(file: *mut SdifFileT) -> isize;
     pub fn SdifSignatureConst(a: c_char, b: c_char, c: c_char, d: c_char) -> SdifSignature;
     pub fn SdifSizeofDataType(data_type: SdifDataTypeET) -> usize;
+
+    // Frame reading functions
+    pub fn SdifFReadFrameHeader(file: *mut SdifFileT) -> isize;
+    pub fn SdifFSkipFrameData(file: *mut SdifFileT) -> isize;
+    pub fn SdifFCurrTime(file: *mut SdifFileT) -> c_double;
+    pub fn SdifFCurrFrameSignature(file: *mut SdifFileT) -> SdifSignature;
+    pub fn SdifFCurrNbMatrix(file: *mut SdifFileT) -> u32;
+    pub fn SdifFGetSignature(file: *mut SdifFileT) -> u32;
+
+    // Matrix reading functions
+    pub fn SdifFReadMatrixHeader(file: *mut SdifFileT) -> isize;
+    pub fn SdifFSkipMatrixData(file: *mut SdifFileT) -> isize;
+    pub fn SdifFCurrMatrixSignature(file: *mut SdifFileT) -> SdifSignature;
+    pub fn SdifFCurrNbRow(file: *mut SdifFileT) -> u32;
+    pub fn SdifFCurrNbCol(file: *mut SdifFileT) -> u32;
+    pub fn SdifFCurrDataType(file: *mut SdifFileT) -> SdifDataTypeET;
+    pub fn SdifFReadOneRow(file: *mut SdifFileT) -> isize;
+    pub fn SdifFCurrOneRowData(file: *mut SdifFileT) -> *mut c_void;
+    pub fn SdifFReadMatrixData(file: *mut SdifFileT) -> isize;
 }
 
 #[cfg(test)]
